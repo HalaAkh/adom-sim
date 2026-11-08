@@ -6,7 +6,7 @@ Five experiments (all with the same tasks for every method, 30 seeds, 95% CIs):
   E2 uavs      : vary the number of UAVs (3-6)              at medium-high load
   E3 deadline  : vary the deadlines (x0.75, x1, x1.5)        at medium-high load
   E4 accuracy  : vary the required accuracy range            at medium-high load
-  E5 margin    : AD-OM only, vary the margin fraction kappa (sensitivity; justifies kappa = 0.25)
+  E5 margin    : AD-OM only, vary the margin fraction kappa (sensitivity; justifies kappa = 0.15)
 
 Usage:
     python run_experiments.py              # all experiments, 30 seeds
@@ -90,7 +90,7 @@ def summarize(df):
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"]
 MARKERS = ["o", "s", "^", "D", "v", "P"]
 MAIN = ["AD-OM", "Zhang (queue)", "Meng (battery/load)", "Wang (deadline)", "Yan (no migration)", "Nearest UAV"]
-ABLATION = ["AD-OM", "AD-OM w/o downgrade", "AD-OM w/o migration", "AD-OM adaptive margin"]
+ABLATION = ["AD-OM", "AD-OM w/o accuracy check", "AD-OM w/o early trigger", "AD-OM w/o migration"]
 XLABEL = {
     "load": "Total arrival rate (tasks/s)",
     "uavs": "Number of UAVs",

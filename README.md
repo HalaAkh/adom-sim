@@ -27,7 +27,7 @@ Results go to `results/`: `summary.csv` (mean + 95% CI), `raw_results.csv`, and 
 ## One slot of the simulation
 
 1. New tasks arrive (Poisson). The policy picks local or a (UAV, configuration) - `assign`.
-2. The policy re-checks waiting tasks - `on_slot` (AD-OM: stay / downgrade / migrate).
+2. The policy re-checks waiting tasks - `on_slot` (AD-OM: stay / migrate / best-effort).
 3. Each UAV processes its queue for 0.1 s (EDF, non-preemptive; best-effort queue last).
 4. Batteries drain (hover + computing). A UAV at 15% hands its waiting tasks over and leaves.
 5. Finished tasks are scored: success = accurate enough AND on time AND batteries OK.
@@ -36,8 +36,10 @@ Results go to `results/`: `summary.csv` (mean + 95% CI), `raw_results.csv`, and 
 
 | Name | Arrival rule | Migration trigger | Accuracy-aware migration |
 |---|---|---|---|
-| AD-OM | most accurate feasible | own spare time < margin (kappa = 0.25) | yes (+ downgrade first) |
-| AD-OM w/o downgrade / w/o migration / adaptive margin | ablations | | |
+| AD-OM | fastest feasible, with margin + no-harm | own spare time < margin (kappa = 0.15) | yes |
+| AD-OM w/o accuracy check | ablation | same | no |
+| AD-OM w/o early trigger | ablation | only when it will be late (s < 0) | yes |
+| AD-OM w/o migration | ablation | none | - |
 | Zhang (queue) | same as AD-OM | queue > Gamma/2 | no |
 | Meng (battery/load) | same as AD-OM | load >= 80% | no |
 | Wang (deadline) | same as AD-OM | estimated completion > deadline | no |
@@ -62,6 +64,16 @@ Results go to `results/`: `summary.csv` (mean + 95% CI), `raw_results.csv`, and 
 | E3 deadline | deadlines x0.75, x1, x1.5 | 0.10 |
 | E4 accuracy | required accuracy from [0.60, 0.62, 0.64] up to 0.67 | 0.10 |
 | E5 margin | AD-OM margin fraction kappa 0.05-0.40 (sensitivity) | 0.06 and 0.12 |
+
+## Step-by-step build-up from Yan (chain.py)
+
+`python chain.py --seeds 30` starts from Yan 2025 and adds one AD-OM feature per step:
+S0 Yan -> S1 + no-harm check -> S2 + late-trigger migration (accuracy-blind)
+-> S3 + accuracy check -> S4 + early trigger = AD-OM. Output: results/chain_summary.csv.
+
+Note: AD-OM no longer downgrades. Placing each task at the fastest feasible configuration means
+it already runs the lightest configuration that meets a_k on its UAV, so no lighter configuration
+can pass the accuracy check (0 downgrades measured). The code path is kept (`use_downgrade`).
 
 Local-only is not a method: the wearable's 384p model (59.6%) is below every required
 accuracy (0.60-0.67), so no task can succeed locally. AD-OM still checks the local option.

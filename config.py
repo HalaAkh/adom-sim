@@ -74,7 +74,7 @@ class SimConfig:
     uav_reserve_frac: float = 0.15   # B_min = 0.15 B_max                      [Meng 2026]
 
     # ---------------- AD-OM ----------------
-    kappa_init: float = 0.25         # margin fraction kappa (fixed in AD-OM)  chosen by sensitivity sweep
+    kappa_init: float = 0.15         # margin fraction kappa (fixed in AD-OM)  chosen by sensitivity sweep (fig10)
                                      # (adaptive variant starts here and moves within [kappa_min, kappa_max])
     kappa_up: float = 0.02           # increase after a missed deadline
     kappa_down: float = 0.001        # decrease after a success
@@ -83,6 +83,6 @@ class SimConfig:
     mig_energy_ref_j: float = 1.0    # E_ref used to normalize migration energy ASSUMPTION
 
     # ---------------- Benchmarks ----------------
-    zhang_queue_cap: int = 10        # Gamma; migrate when queue > Gamma/2    [Zhang 2026; Meng 2026: Gamma = 10]
+    zhang_queue_cap: int = 10        # Gamma (tasks); migrate when queue > Gamma/2  [rule: Zhang 2026, Eq. 65; value: ASSUMPTION]
     meng_load_threshold: float = 0.80   # migrate when load >= 80%           [Meng 2026]
     meng_load_window_s: float = 10.0 # window used to measure load             ASSUMPTION

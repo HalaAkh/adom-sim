@@ -126,12 +126,28 @@ class Policy:
 # ===========================================================================
 class ADOM(Policy):
     """Accuracy- and Deadline-aware Offloading and Migration.
-    Flags let us build the ablations of the paper."""
 
-    def __init__(self, use_downgrade=True, use_migration=True, adaptive_margin=False, name="AD-OM"):
-        self.use_downgrade = use_downgrade
+    Stage 1 (arrival): the FASTEST option that meets the accuracy a_k and the deadline with the
+             safety margin (F1-F4, F6) - the same rule as Yan 2025 plus the margin and no-harm checks.
+    Stage 2 (every slot): if spare time s_k < margin delta_k, migrate once to the cheapest UAV whose
+             configuration still meets a_k (F1-F6); otherwise best-effort if it will be late anyway.
+
+    Flags build the ablations of the paper:
+      acc_aware_migration=False -> migrate without checking accuracy (destination keeps the same
+                                   configuration or the most accurate lighter one, like the benchmarks)
+      early_trigger=False       -> migrate only when the task is already going to be late (s_k < 0)
+      use_migration=False       -> no migration at all
+    use_downgrade is kept for reference only: with fastest-feasible placement the chosen configuration
+    is already the lightest one that meets a_k on that UAV, so a downgrade can never pass F1 (0 in runs).
+    """
+
+    def __init__(self, use_migration=True, acc_aware_migration=True, early_trigger=True,
+                 use_downgrade=False, adaptive_margin=False, name="AD-OM"):
         self.use_migration = use_migration
-        self.adaptive_margin = adaptive_margin   # default: fixed margin kappa = 0.25 (see sensitivity sweep)
+        self.acc_aware_migration = acc_aware_migration
+        self.early_trigger = early_trigger
+        self.use_downgrade = use_downgrade
+        self.adaptive_margin = adaptive_margin   # default: fixed margin kappa = 0.15 (see sensitivity sweep)
         self.name = name
 
     # ---------------- adaptive safety margin, Eq. (6) ----------------
@@ -151,12 +167,12 @@ class ADOM(Policy):
     # ---------------- Stage 1: offloading at arrival ----------------
     def assign(self, sim, task, now):
         for theta in (self.margin(sim, task), 0.0):
-            options = []          # (accuracy, spare, -energy, uav_id or None, config)
+            options = []          # (result_time, -accuracy, energy, uav_id or None, config)
             if acc("384p") >= task.a_req:                         # local option (F1)
                 rt, en = local_option(sim, task, now)
                 spare = task.deadline - rt
                 if spare >= theta and sim.users[task.user].battery_j > en:
-                    options.append((acc("384p"), spare, -en, None, "384p"))
+                    options.append((rt, -acc("384p"), en, None, "384p"))
             for u in sim.available_uavs():
                 if not sim.user_in_range(task.user, u.id):       # F6
                     continue
@@ -166,10 +182,10 @@ class ADOM(Policy):
                     up = sim.upload_time(task, u.id, cf)
                     ok, spare, rt = evaluate_option(sim, task, u, cf, now, now + up, theta)  # F2-F4
                     if ok:
-                        options.append((acc(cf), spare, -offload_energy(sim, task, up, rt, now), u.id, cf))
+                        options.append((rt, -acc(cf), offload_energy(sim, task, up, rt, now), u.id, cf))
             if options:
-                # most accurate, then largest spare time, then lowest wearable energy
-                best = max(options, key=lambda x: (x[0], x[1], x[2]))
+                # earliest answer, then higher accuracy, then lower wearable energy
+                best = min(options, key=lambda x: (x[0], x[1], x[2]))
                 sim.place(task, best[3], best[4], now)
                 return
         place_best_effort(sim, task, now)
@@ -187,7 +203,7 @@ class ADOM(Policy):
                     continue
                 fin = sim.estimate_finish_times(u, now)          # queue may have changed
                 s = k.deadline - (fin[k.id] + sim.download_time(k, u.id))
-                delta = self.margin(sim, k)
+                delta = self.margin(sim, k) if self.early_trigger else 0.0
                 if s >= delta:
                     continue                                     # safe: stay
                 acted = False
@@ -216,10 +232,15 @@ class ADOM(Policy):
         for dst in sim.available_uavs():
             if dst.id == src.id or not sim.uavs_in_range(src.id, dst.id):   # F6
                 continue
-            for cf in dst.configs:
+            if require_accuracy and self.acc_aware_migration:
+                cands = dst.configs
+            else:                                    # ablation: accuracy-blind choice, like the benchmarks
+                cf0 = dest_config_unaware(k, dst)
+                cands = [cf0] if cf0 else []
+            for cf in cands:
                 if CONFIG_ORDER.index(cf) > CONFIG_ORDER.index(k.config):    # F5: no upscaling
                     continue
-                if require_accuracy and acc(cf) < k.a_req:                   # F1
+                if require_accuracy and self.acc_aware_migration and acc(cf) < k.a_req:   # F1
                     continue
                 t_mig = sim.migration_time(cf, src.id, dst.id)
                 ok, spare, _ = evaluate_option(sim, k, dst, cf, now, max(now, k.ready_time) + t_mig, theta)
@@ -415,9 +436,9 @@ def all_methods():
     requirement (0.60-0.67), so it can never succeed."""
     return [
         ADOM(),
-        ADOM(use_downgrade=False, name="AD-OM w/o downgrade"),
+        ADOM(acc_aware_migration=False, name="AD-OM w/o accuracy check"),
+        ADOM(early_trigger=False, name="AD-OM w/o early trigger"),
         ADOM(use_migration=False, name="AD-OM w/o migration"),
-        ADOM(adaptive_margin=True, name="AD-OM adaptive margin"),
         ZhangQueue(),
         MengLoad(),
         WangDeadline(),

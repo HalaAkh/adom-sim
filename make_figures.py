@@ -7,7 +7,7 @@ produced by run_experiments.py).
 Creates in ./results:
     fig_scenario.png    top view of the simulated area: users, UAVs, coverage, hosted configurations
     fig_tradeoff.png    accuracy vs. response time of the four LLaVA-HR configurations
-    fig_casestudy.png   one task followed slot by slot under AD-OM and under Wang (deadline-triggered)
+    fig_casestudy.png   one task followed slot by slot under AD-OM and under Wang (deadline-triggered, accuracy-blind)
 """
 import math
 import os
@@ -101,15 +101,20 @@ def fig_tradeoff(distance_m=200.0):
 # Figure C: case study - one task under AD-OM and under Wang
 # ---------------------------------------------------------------------------
 def find_case(cfg, seeds=range(10)):
-    """First task that AD-OM rescues by a downgrade on the same UAV, while Wang moves it to a UAV
-    whose model is not accurate enough."""
+    """First task that AD-OM rescues by migrating it to a UAV that is still accurate enough, while
+    Wang moves it to a UAV whose model is not accurate enough - and both start from the same state
+    (same UAV, configuration and spare time on arrival), so the two curves are directly comparable."""
     for seed in seeds:
         a = {k.id: k for k in Simulator(cfg, ADOM(), seed).run()}
         w = {k.id: k for k in Simulator(cfg, WangDeadline(), seed).run()}
         for tid in sorted(a):
             ka, kw = a[tid], w[tid]
-            if (ka.success and ka.n_downgrades > 0 and not ka.migrated
-                    and kw.migrated and acc(kw.config) < kw.a_req):
+            if not (ka.success and ka.migrated and kw.migrated
+                    and acc(kw.config) < kw.a_req and ka.uav != kw.uav):
+                continue
+            _, pa = trace(cfg, ADOM(), seed, tid)
+            _, pw = trace(cfg, WangDeadline(), seed, tid)
+            if pa and pw and pa[0][2:] == pw[0][2:] and abs(pa[0][1] - pw[0][1]) < 0.02:
                 return seed, tid
     return None
 
@@ -144,7 +149,7 @@ def fig_casestudy(rate=0.10):
                         else f"migrate to UAV {u1 + 1}, {c1}\n({acc(c1) * 100:.1f}% < {task.a_req * 100:.1f}%)"
                         if acc(c1) < task.a_req else f"migrate to UAV {u1 + 1}, {c1}")
                 ax.scatter([t1], [s1], color=col, marker=mk, s=30, zorder=4)
-                ax.annotate(what, (t1, s1), textcoords="offset points", xytext=(6, 16 if name == "AD-OM" else -24),
+                ax.annotate(what, (t1, s1), textcoords="offset points", xytext=(6, 16) if name == "AD-OM" or s1 > 0.15 else (8, 10),
                             fontsize=6, color="#2c2c2a")
         ok = "success" if task.success else ("late" if task.result_time - task.t_arr > task.t_max
                                              else "on time, accuracy too low")
@@ -158,7 +163,7 @@ def fig_casestudy(rate=0.10):
     ax.set_xlim(-0.05, ax.get_xlim()[1] + 0.45)
     ax.set_xlabel("Time since the task arrived (s)", fontsize=8)
     ax.set_ylabel("Spare time $s_k$ (s)", fontsize=8)
-    ax.set_title(f"Task needing accuracy {task.a_req * 100:.1f}% within {task.t_max:.0f} s", fontsize=8)
+    ax.set_title(f"Task needing accuracy {task.a_req * 100:.1f}% within {task.t_max:g} s", fontsize=8)
     style(ax)
     ax.legend(fontsize=6, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=2)
     fig.tight_layout()
