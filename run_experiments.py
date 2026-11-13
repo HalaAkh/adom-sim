@@ -89,7 +89,8 @@ def summarize(df):
 # so identity never relies on colour alone. A method keeps its colour in every figure.
 COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"]
 MARKERS = ["o", "s", "^", "D", "v", "P"]
-MAIN = ["AD-OM", "Zhang (queue)", "Meng (battery/load)", "Wang (deadline)", "Yan (no migration)", "Nearest UAV"]
+MAIN = ["AD-OM", "QTM", "BLTM", "DTM", "AAO", "Nearest UAV"]
+# QTM [Zhang 2026], BLTM [Meng 2026], DTM [Wang 2025], AAO [Yan 2025]
 ABLATION = ["AD-OM", "AD-OM w/o accuracy check", "AD-OM w/o early trigger", "AD-OM w/o migration"]
 XLABEL = {
     "load": "Total arrival rate (tasks/s)",
@@ -126,13 +127,35 @@ def plot(summary, exp, methods, metric, ylabel, fname, out):
     plt.close(fig)
 
 
+def draw_all(summary, out):
+    # E1: main result versus load
+    plot(summary, "load", MAIN, "success_rate", "Task success rate", "fig1_success_vs_load.png", out)
+    plot(summary, "load", MAIN, "accuracy_violation_rate", "Accuracy violation rate", "fig2_accviol_vs_load.png", out)
+    plot(summary, "load", MAIN, "deadline_violation_rate", "Deadline violation rate", "fig3_deadline_vs_load.png", out)
+    plot(summary, "load", MAIN, "migrations_per_task", "Migrations per task", "fig4_migrations_vs_load.png", out)
+    plot(summary, "load", ABLATION, "success_rate", "Task success rate", "fig5_ablation_vs_load.png", out)
+    # E2-E4: sensitivity
+    plot(summary, "uavs", MAIN, "success_rate", "Task success rate", "fig6_success_vs_uavs.png", out)
+    plot(summary, "deadline", MAIN, "success_rate", "Task success rate", "fig7_success_vs_deadline.png", out)
+    plot(summary, "accuracy", MAIN, "success_rate", "Task success rate", "fig8_success_vs_accuracy.png", out)
+    plot(summary, "accuracy", MAIN, "accuracy_violation_rate", "Accuracy violation rate",
+         "fig9_accviol_vs_accuracy.png", out)
+    # E5: margin sensitivity
+    plot(summary, "margin", None, "success_rate", "Task success rate", "fig10_margin_sensitivity.png", out)
+
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--out", default="results")
     ap.add_argument("--workers", type=int, default=os.cpu_count())
+    ap.add_argument("--plot-only", action="store_true", help="redraw figures from results/summary.csv")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
+    if a.plot_only:
+        draw_all(pd.read_csv(os.path.join(a.out, "summary.csv")), a.out)
+        return
 
     n_methods = len(all_methods())
     jobs = []
@@ -150,20 +173,7 @@ def main():
     summary = summarize(df)
     summary.to_csv(os.path.join(a.out, "summary.csv"), index=False)
 
-    # E1: main result versus load
-    plot(summary, "load", MAIN, "success_rate", "Task success rate", "fig1_success_vs_load.png", a.out)
-    plot(summary, "load", MAIN, "accuracy_violation_rate", "Accuracy violation rate", "fig2_accviol_vs_load.png", a.out)
-    plot(summary, "load", MAIN, "deadline_violation_rate", "Deadline violation rate", "fig3_deadline_vs_load.png", a.out)
-    plot(summary, "load", MAIN, "migrations_per_task", "Migrations per task", "fig4_migrations_vs_load.png", a.out)
-    plot(summary, "load", ABLATION, "success_rate", "Task success rate", "fig5_ablation_vs_load.png", a.out)
-    # E2-E4: sensitivity
-    plot(summary, "uavs", MAIN, "success_rate", "Task success rate", "fig6_success_vs_uavs.png", a.out)
-    plot(summary, "deadline", MAIN, "success_rate", "Task success rate", "fig7_success_vs_deadline.png", a.out)
-    plot(summary, "accuracy", MAIN, "success_rate", "Task success rate", "fig8_success_vs_accuracy.png", a.out)
-    plot(summary, "accuracy", MAIN, "accuracy_violation_rate", "Accuracy violation rate",
-         "fig9_accviol_vs_accuracy.png", a.out)
-    # E5: margin sensitivity
-    plot(summary, "margin", None, "success_rate", "Task success rate", "fig10_margin_sensitivity.png", a.out)
+    draw_all(summary, a.out)
 
     cols = ["experiment", "method", "x", "success_rate", "accuracy_violation_rate",
             "deadline_violation_rate", "migrations_per_task", "downgrades_per_task"]

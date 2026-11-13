@@ -40,10 +40,10 @@ Results go to `results/`: `summary.csv` (mean + 95% CI), `raw_results.csv`, and 
 | AD-OM w/o accuracy check | ablation | same | no |
 | AD-OM w/o early trigger | ablation | only when it will be late (s < 0) | yes |
 | AD-OM w/o migration | ablation | none | - |
-| Zhang (queue) | same as AD-OM | queue > Gamma/2 | no |
-| Meng (battery/load) | same as AD-OM | load >= 80% | no |
-| Wang (deadline) | same as AD-OM | estimated completion > deadline | no |
-| Yan (no migration) | lowest-latency feasible | none | - |
+| QTM - queue-triggered [Zhang 2026] | same as AD-OM | queue > Gamma/2 | no |
+| BLTM - battery/load-triggered [Meng 2026] | same as AD-OM | load >= 80% | no |
+| DTM - deadline-triggered [Wang 2025] | same as AD-OM | estimated completion > deadline | no |
+| AAO - accuracy-aware offloading [Yan 2025] | lowest-latency feasible | none | - |
 | Nearest UAV | nearest UAV | none | - |
 
 ## Simplifying assumptions (state them in the paper)

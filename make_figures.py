@@ -137,7 +137,7 @@ def fig_casestudy(rate=0.10):
     seed, tid = found
     fig, ax = plt.subplots(figsize=(4.2, 3.2), dpi=200)
     task = None
-    for policy, col, mk, name in ((ADOM(), BLUE, "o", "AD-OM"), (WangDeadline(), ORANGE, "s", "Wang (deadline)")):
+    for policy, col, mk, name in ((ADOM(), BLUE, "o", "AD-OM"), (WangDeadline(), ORANGE, "s", "DTM")):
         task, pts = trace(cfg, policy, seed, tid)
         t = [p[0] for p in pts] + [task.result_time - task.t_arr]
         s = [p[1] for p in pts] + [pts[-1][1]]

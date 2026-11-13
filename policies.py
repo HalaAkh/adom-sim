@@ -301,9 +301,9 @@ class _SameArrival(Policy):
 
 
 class ZhangQueue(_SameArrival):
-    """[Zhang 2026] Migrate when a UAV's queue exceeds Gamma/2, to the neighbour with the best
+    """QTM - Queue-Triggered Migration [Zhang 2026] Migrate when a UAV's queue exceeds Gamma/2, to the neighbour with the best
     distance + queue score. Accuracy-unaware."""
-    name = "Zhang (queue)"
+    name = "QTM"
 
     def on_slot(self, sim, now, load_slots):
         cap = sim.cfg.zhang_queue_cap
@@ -329,9 +329,9 @@ class ZhangQueue(_SameArrival):
 
 
 class MengLoad(_SameArrival):
-    """[Meng 2026] Migrate when a UAV's load reaches 80% (battery <= 15% is handled by relocate),
+    """BLTM - Battery/Load-Triggered Migration [Meng 2026] Migrate when a UAV's load reaches 80% (battery <= 15% is handled by relocate),
     to the least-loaded UAV. Accuracy-unaware."""
-    name = "Meng (battery/load)"
+    name = "BLTM"
 
     def on_slot(self, sim, now, load_slots):
         th = sim.cfg.meng_load_threshold
@@ -352,9 +352,9 @@ class MengLoad(_SameArrival):
 
 
 class WangDeadline(_SameArrival):
-    """[Wang 2025] Migrate a task whose estimated completion exceeds its deadline,
+    """DTM - Deadline-Triggered Migration [Wang 2025] Migrate a task whose estimated completion exceeds its deadline,
     to the UAV with the lowest estimated completion time. No accuracy check."""
-    name = "Wang (deadline)"
+    name = "DTM"
 
     def on_slot(self, sim, now, load_slots):
         for u in sim.available_uavs():
@@ -386,8 +386,8 @@ class WangDeadline(_SameArrival):
 # Benchmarks / baselines with their own arrival rule and no migration
 # ===========================================================================
 class YanNoMigration(Policy):
-    """[Yan 2025] Accuracy- and deadline-feasible assignment with the lowest latency. No migration."""
-    name = "Yan (no migration)"
+    """AAO - Accuracy-Aware Offloading, no migration [Yan 2025] Accuracy- and deadline-feasible assignment with the lowest latency. No migration."""
+    name = "AAO"
 
     def assign(self, sim, task, now):
         options = []
