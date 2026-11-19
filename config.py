@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 # ---------------------------------------------------------------------------
 PROFILES = {
     "384p":  {"accuracy": 0.5963, "speed": 23.8, "input_mb": 0.42},
-    "768p":  {"accuracy": 0.6436, "speed": 19.9, "input_mb": 1.68},
+    "768p":  {"accuracy": 0.6436, "speed": 23.5, "input_mb": 1.68},   # 23.5 tok/s: LLaVA-HR 768p row [Luo 2024, Table 1]
     "1024p": {"accuracy": 0.6711, "speed": 19.7, "input_mb": 2.99},
     "1536p": {"accuracy": 0.6796, "speed": 12.6, "input_mb": 6.74},
 }

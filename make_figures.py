@@ -100,7 +100,7 @@ def fig_tradeoff(distance_m=200.0):
 # ---------------------------------------------------------------------------
 # Figure C: case study - one task under AD-OM and under Wang
 # ---------------------------------------------------------------------------
-def find_case(cfg, seeds=range(10)):
+def find_case(cfg, seeds=range(30)):
     """First task that AD-OM rescues by migrating it to a UAV that is still accurate enough, while
     Wang moves it to a UAV whose model is not accurate enough - and both start from the same state
     (same UAV, configuration and spare time on arrival), so the two curves are directly comparable."""
@@ -114,7 +114,17 @@ def find_case(cfg, seeds=range(10)):
                 continue
             _, pa = trace(cfg, ADOM(), seed, tid)
             _, pw = trace(cfg, WangDeadline(), seed, tid)
-            if pa and pw and pa[0][2:] == pw[0][2:] and abs(pa[0][1] - pw[0][1]) < 0.02:
+            margin = max(cfg.kappa_init * ka.t_max, cfg.slot_s)
+            if not (pa and pw and pa[0][2:] == pw[0][2:] and abs(pa[0][1] - pw[0][1]) < 0.02
+                    and pa[0][1] > margin + 0.15):          # same start, safe at first
+                continue
+            ia = next((i for i in range(1, len(pa)) if pa[i][2:] != pa[i - 1][2:]), None)
+            iw = next((i for i in range(1, len(pw)) if pw[i][2:] != pw[i - 1][2:]), None)
+            if ia is None or iw is None:
+                continue
+            before_a = [q[1] for q in pa[:ia]]
+            # AD-OM acts while still on time but below the margin, clearly before DTM acts
+            if min(before_a) >= 0 and pa[ia - 1][1] < margin and pw[iw][0] - pa[ia][0] >= 0.15:
                 return seed, tid
     return None
 
@@ -149,10 +159,12 @@ def fig_casestudy(rate=0.10):
                         else f"migrate to UAV {u1 + 1}, {c1}\n({acc(c1) * 100:.1f}% < {task.a_req * 100:.1f}%)"
                         if acc(c1) < task.a_req else f"migrate to UAV {u1 + 1}, {c1}")
                 ax.scatter([t1], [s1], color=col, marker=mk, s=30, zorder=4)
-                ax.annotate(what, (t1, s1), textcoords="offset points", xytext=(6, 16) if name == "AD-OM" or s1 > 0.15 else (8, 10),
+                ax.annotate(what, (t1, s1), textcoords="offset points", xytext=(8, -22) if s1 > 0.6 else ((8, -16) if name == "AD-OM" else (8, 10)),
                             fontsize=6, color="#2c2c2a")
-        ok = "success" if task.success else ("late" if task.result_time - task.t_arr > task.t_max
-                                             else "on time, accuracy too low")
+        late = task.result_time - task.t_arr > task.t_max
+        low = acc(task.config) < task.a_req
+        ok = ("success" if task.success else "late and accuracy too low" if late and low
+              else "late" if late else "on time, accuracy too low")
         ax.scatter([t[-1]], [s[-1]], color=col, marker=mk, s=30, zorder=4, facecolor="white")
         ax.annotate(f"answer: {ok}", (t[-1], s[-1]), textcoords="offset points", xytext=(4, 4),
                     fontsize=6, color="#2c2c2a")

@@ -11,6 +11,7 @@ Each step adds ONE feature to the previous one:
 Run:  python chain.py --seeds 30
 """
 import argparse
+import os
 from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import pandas as pd
@@ -52,6 +53,7 @@ def main():
     with ProcessPoolExecutor() as ex:
         rows = list(ex.map(one, jobs, chunksize=4))
     df = pd.DataFrame(rows)
+    os.makedirs("results", exist_ok=True)
     df.to_csv("results/chain_raw.csv", index=False)
     g = df.groupby(["step", "load"], sort=False)
     out = g.mean(numeric_only=True).drop(columns="seed")
