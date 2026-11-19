@@ -14,9 +14,6 @@ python make_bar_figures.py              # bar charts used as Figs. 5 and 6 (from
 python run_experiments.py --seeds 5     # optional quick check (noisier than the paper)
 python run_experiments.py --plot-only   # redraw figures from an existing results/summary.csv
 ```
-The `results/` folder is not in the repository: it is created by these commands and holds
-`summary.csv` (mean + 95% CI), `raw_results.csv`, `chain_summary.csv` and all `fig*.png`.
-With 30 seeds the numbers match the paper exactly.
 
 ## Files and how they map to the paper
 
