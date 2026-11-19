@@ -121,7 +121,7 @@ def plot(summary, exp, methods, metric, ylabel, fname, out):
     ax.grid(True, color="#dddddd", linewidth=0.5)
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
-    ax.legend(fontsize=6, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3)
+    ax.legend(fontsize=6, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2)
     fig.tight_layout()
     fig.savefig(os.path.join(out, fname))
     plt.close(fig)
