@@ -42,7 +42,7 @@ def style(ax):
 def fig_scenario(seed=0):
     cfg = SimConfig()
     sim = Simulator(cfg, ADOM(), seed)          # only used to build the same network as the experiments
-    fig, ax = plt.subplots(figsize=(4.2, 3.7), dpi=600)
+    fig, ax = plt.subplots(figsize=(4.2, 2.5), dpi=600)   # same width as fig_tradeoff and the bar figures
     r_h = math.sqrt(cfg.g2a_range_m ** 2 - cfg.uav_altitude_m ** 2)   # horizontal coverage radius
     for u in sim.uavs:
         col = UAV_COLORS[u.id % 3]
@@ -62,7 +62,8 @@ def fig_scenario(seed=0):
     ax.set_xlabel("x (m)", fontsize=8)
     ax.set_ylabel("y (m)", fontsize=8)
     style(ax)
-    ax.legend(fontsize=5.5, frameon=True, framealpha=0.9, edgecolor="#bbbbbb", fancybox=False, loc="lower left", ncol=1)   # legend inside the map
+    ax.legend(fontsize=6.5, frameon=True, framealpha=0.9, edgecolor="#bbbbbb", fancybox=False,
+              loc="center left", bbox_to_anchor=(1.04, 0.5), ncol=1)   # legend to the right of the map
     fig.tight_layout()
     fig.savefig(os.path.join(OUT, "fig_scenario.png"))
     plt.close(fig)
