@@ -1,6 +1,6 @@
 # AD-OM simulator
 
-Time-slotted Python simulator for the paper *Accuracy- and Deadline-Aware Multimodal AI Task
+Time-slotted Python simulator for the paper *Accuracy and Deadline-Aware Multimodal AI Task
 Offloading and Migration in Cooperative Multi-UAV Edge Computing*.
 
 ## Run it
