@@ -19,6 +19,8 @@ import matplotlib
 import matplotlib.ticker
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import scienceplots  # noqa: F401
+plt.style.use(["science", "ieee", "no-latex"])
 
 from run_experiments import COLORS, MAIN
 
@@ -30,13 +32,12 @@ def grouped_bars(summary, exp, metric, xlabel, ylabel, fname, xfmt="{:g}"):
     xs = sorted(data.x.unique())
     n = len(MAIN)
     width = 0.8 / n
-    fig, ax = plt.subplots(figsize=(3.5, 2.4), dpi=300)        # one IEEE column
+    fig, ax = plt.subplots(figsize=(4.2, 2.4), dpi=600)        # one IEEE column
     for i, m in enumerate(MAIN):
         g = data[data.method == m].set_index("x").reindex(xs)
         pos = np.arange(len(xs)) - 0.4 + width * (i + 0.5)
-        ax.bar(pos, g[metric], width * 0.9, yerr=g[metric + "_ci95"], label=m,
-               color=COLORS[i % len(COLORS)], edgecolor="black", linewidth=0.4,
-               error_kw=dict(elinewidth=0.6, capsize=1.5, ecolor="black"))
+        ax.bar(pos, g[metric], width * 0.9, label=m,
+               color=COLORS[i % len(COLORS)], edgecolor="black", linewidth=0.4)
     ax.set_xticks(np.arange(len(xs)))
     ax.set_xticklabels([xfmt.format(x) for x in xs], fontsize=7)
     ax.set_xlabel(xlabel, fontsize=8)

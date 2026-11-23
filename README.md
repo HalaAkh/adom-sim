@@ -6,7 +6,7 @@ Offloading and Migration in Cooperative Multi-UAV Edge Computing*.
 ## Run it
 
 ```bash
-pip install numpy pandas scipy matplotlib
+pip install numpy pandas scipy matplotlib SciencePlots
 python run_experiments.py               # all 5 experiments, 30 seeds (paper run), figures fig1-fig10
 python chain.py                         # step-by-step table: AAO -> AD-OM (Table II)
 python make_figures.py                  # scenario map, accuracy-time trade-off, case study

@@ -87,7 +87,7 @@ def summarize(df):
 
 # Fixed categorical colours (validated palette) + a marker per series,
 # so identity never relies on colour alone. A method keeps its colour in every figure.
-COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"]
+COLORS = ["#0C5DA5", "#FF2C00", "#00B945", "#FF9500", "#845B97", "#474747"]
 MARKERS = ["o", "s", "^", "D", "v", "P"]
 MAIN = ["AD-OM", "QTM", "BLTM", "DTM", "AAO", "Nearest UAV"]
 # QTM [Zhang 2026], BLTM [Meng 2026], DTM [Wang 2025], AAO [Yan 2025]
@@ -105,23 +105,25 @@ def plot(summary, exp, methods, metric, ylabel, fname, out):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    import scienceplots  # noqa: F401  (registers the IEEE style)
+    plt.style.use(["science", "ieee", "no-latex"])
     data = summary[summary.experiment == exp]
     if methods is None:
         methods = list(dict.fromkeys(data.method))
-    fig, ax = plt.subplots(figsize=(4.2, 3.4), dpi=200)   # one IEEE column
+    fig, ax = plt.subplots(figsize=(5.2, 2.9), dpi=600)   # one IEEE column
     for i, m in enumerate(methods):
         g = data[data.method == m].sort_values("x")
         if g.empty:
             continue
-        ax.errorbar(g.x, g[metric], yerr=g[metric + "_ci95"], label=m, color=COLORS[i % 6],
-                    marker=MARKERS[i % 6], markersize=5, linewidth=1.6, capsize=2)
+        ax.plot(g.x, g[metric], label=m, color=COLORS[i % 6],
+                marker=MARKERS[i % 6], markersize=5, linewidth=1.6)
     ax.set_xlabel(XLABEL[exp], fontsize=8)
     ax.set_ylabel(ylabel, fontsize=8)
     ax.tick_params(labelsize=7)
     ax.grid(True, color="#dddddd", linewidth=0.5)
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
-    ax.legend(fontsize=6, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2)
+    ax.legend(fontsize=6, frameon=True, framealpha=0.9, edgecolor="#bbbbbb", fancybox=False, loc="best", ncol=2)   # legend inside the plot
     fig.tight_layout()
     fig.savefig(os.path.join(out, fname))
     plt.close(fig)

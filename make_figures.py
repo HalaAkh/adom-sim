@@ -16,6 +16,8 @@ from dataclasses import replace
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import scienceplots  # noqa: F401
+plt.style.use(["science", "ieee", "no-latex"])
 
 from config import SimConfig, PROFILES, CONFIG_ORDER
 from simulator import Simulator, acc, link_rate_bps
@@ -40,7 +42,7 @@ def style(ax):
 def fig_scenario(seed=0):
     cfg = SimConfig()
     sim = Simulator(cfg, ADOM(), seed)          # only used to build the same network as the experiments
-    fig, ax = plt.subplots(figsize=(4.2, 4.0), dpi=200)
+    fig, ax = plt.subplots(figsize=(4.2, 3.7), dpi=600)
     r_h = math.sqrt(cfg.g2a_range_m ** 2 - cfg.uav_altitude_m ** 2)   # horizontal coverage radius
     for u in sim.uavs:
         col = UAV_COLORS[u.id % 3]
@@ -60,7 +62,7 @@ def fig_scenario(seed=0):
     ax.set_xlabel("x (m)", fontsize=8)
     ax.set_ylabel("y (m)", fontsize=8)
     style(ax)
-    ax.legend(fontsize=6, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=2)
+    ax.legend(fontsize=5.5, frameon=True, framealpha=0.9, edgecolor="#bbbbbb", fancybox=False, loc="lower left", ncol=1)   # legend inside the map
     fig.tight_layout()
     fig.savefig(os.path.join(OUT, "fig_scenario.png"))
     plt.close(fig)
@@ -72,7 +74,7 @@ def fig_scenario(seed=0):
 def fig_tradeoff(distance_m=200.0):
     cfg = SimConfig()
     rate = link_rate_bps(cfg, cfg.user_tx_w, distance_m)
-    fig, ax = plt.subplots(figsize=(4.2, 3.0), dpi=200)
+    fig, ax = plt.subplots(figsize=(4.2, 3.0), dpi=600)
     ax.axhspan(60, 67, color=YELLOW, alpha=0.15, linewidth=0)
     ax.text(1.45, 60.4, "Required accuracy range of tasks (60-67%)", fontsize=6, color="#633806")
     xs, ys = [], []
@@ -145,7 +147,7 @@ def fig_casestudy(rate=0.10):
         print("No case-study task found; skipping fig_casestudy.png")
         return
     seed, tid = found
-    fig, ax = plt.subplots(figsize=(4.2, 3.2), dpi=200)
+    fig, ax = plt.subplots(figsize=(4.2, 2.8), dpi=600)
     task = None
     for policy, col, mk, name in ((ADOM(), BLUE, "o", "AD-OM"), (WangDeadline(), ORANGE, "s", "DTM")):
         task, pts = trace(cfg, policy, seed, tid)
@@ -177,7 +179,7 @@ def fig_casestudy(rate=0.10):
     ax.set_ylabel("Spare time $s_k$ (s)", fontsize=8)
     ax.set_title(f"Task needing accuracy {task.a_req * 100:.1f}% within {task.t_max:g} s", fontsize=8)
     style(ax)
-    ax.legend(fontsize=6, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.17), ncol=2)
+    ax.legend(fontsize=6, frameon=True, framealpha=0.9, edgecolor="#bbbbbb", fancybox=False, loc="upper right", ncol=1)   # legend inside the plot
     fig.tight_layout()
     fig.savefig(os.path.join(OUT, "fig_casestudy.png"))
     plt.close(fig)
